@@ -518,7 +518,7 @@ void btnClick(uint8_t btnId) {
     debug->print(DEBUG_LEVEL_DEBUG, "Request change for id ");
     debug->print(DEBUG_LEVEL_DEBUG, btnId);
     debug->print(DEBUG_LEVEL_DEBUG, ", new state = ");
-    debug->print(DEBUG_LEVEL_DEBUG, state);
+    debug->println(DEBUG_LEVEL_DEBUG, state);
   #endif
 
   #ifndef MODE_RELEASE
