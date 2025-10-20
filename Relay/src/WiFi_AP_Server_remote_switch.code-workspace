@@ -1,0 +1,12 @@
+{
+	"folders": [
+		{
+			"path": "../../WiFi_AP_Server_remote_switch"
+		},
+		{
+			"name": "WebServer_AP_remote_switch",
+			"path": ".."
+		}
+	],
+	"settings": {}
+}
