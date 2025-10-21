@@ -9,9 +9,11 @@ void event_handler(lv_event_t * e)
     lv_obj_t * target = lv_event_get_target(e);
 
     if(code == LV_EVENT_VALUE_CHANGED) {
-        if (target == ui_WaitRelay) {
-            onWaitRelayPressed(lv_obj_get_state(target) & LV_STATE_CHECKED);
-        }
+        #ifdef USE_MODULE_CONTROLS
+            if (target == ui_WaitRelay) {
+                onWaitRelayPressed(lv_obj_get_state(target) & LV_STATE_CHECKED);
+            }
+        #endif
     }
 }
 

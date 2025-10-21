@@ -73,34 +73,34 @@ static void scroll_begin_event(lv_event_t* e)
 #endif
 
 void ui_init_screen_events() {
-#ifdef USE_MODULE_SETTINGS
-    // lv_obj_add_event_cb(ui_Dropdown1, ui_event_Dropdown, LV_EVENT_VALUE_CHANGED, NULL);
-    // lv_obj_add_event_cb(ui_Dropdown2, ui_event_Dropdown, LV_EVENT_VALUE_CHANGED, NULL);
-    // lv_obj_add_event_cb(ui_Dropdown3, ui_event_Dropdown, LV_EVENT_VALUE_CHANGED, NULL);
-    // lv_obj_add_event_cb(ui_Dropdown4, ui_event_Dropdown, LV_EVENT_VALUE_CHANGED, NULL);
-    // lv_obj_add_event_cb(ui_Dropdown5, ui_event_Dropdown, LV_EVENT_VALUE_CHANGED, NULL);
-    // lv_obj_add_event_cb(ui_Dropdown6, ui_event_Dropdown, LV_EVENT_VALUE_CHANGED, NULL);
-#endif 
-
-#ifdef USE_MODULE_CONTROLS
     #ifdef USE_MODULE_SETTINGS
-        // lv_obj_add_event_cb(ui_SwitchesControllerType, ui_event_Dropdown, LV_EVENT_VALUE_CHANGED, NULL);
-    #endif
+        // lv_obj_add_event_cb(ui_Dropdown1, ui_event_Dropdown, LV_EVENT_VALUE_CHANGED, NULL);
+        // lv_obj_add_event_cb(ui_Dropdown2, ui_event_Dropdown, LV_EVENT_VALUE_CHANGED, NULL);
+        // lv_obj_add_event_cb(ui_Dropdown3, ui_event_Dropdown, LV_EVENT_VALUE_CHANGED, NULL);
+        // lv_obj_add_event_cb(ui_Dropdown4, ui_event_Dropdown, LV_EVENT_VALUE_CHANGED, NULL);
+        // lv_obj_add_event_cb(ui_Dropdown5, ui_event_Dropdown, LV_EVENT_VALUE_CHANGED, NULL);
+        // lv_obj_add_event_cb(ui_Dropdown6, ui_event_Dropdown, LV_EVENT_VALUE_CHANGED, NULL);
+    #endif 
 
-    lv_obj_add_event_cb(ui_Panel1, ui_event_Panel, LV_EVENT_CLICKED, NULL);
-    lv_obj_add_event_cb(ui_Panel2, ui_event_Panel, LV_EVENT_CLICKED, NULL);
-    lv_obj_add_event_cb(ui_Panel3, ui_event_Panel, LV_EVENT_CLICKED, NULL);
-    lv_obj_add_event_cb(ui_Panel4, ui_event_Panel, LV_EVENT_CLICKED, NULL);
-    lv_obj_add_event_cb(ui_Panel5, ui_event_Panel, LV_EVENT_CLICKED, NULL);
-    lv_obj_add_event_cb(ui_Panel6, ui_event_Panel, LV_EVENT_CLICKED, NULL);
-    lv_obj_add_event_cb(ui_Panel7, ui_event_Panel, LV_EVENT_CLICKED, NULL);
-#endif
-
-#ifdef SHOW_TABS_AT_LEFT
     #ifdef USE_MODULE_CONTROLS
-        lv_obj_add_event_cb(lv_obj_get_child(ui_MainTabView, 0), controls_button_draw_event_cb, LV_EVENT_DRAW_PART_END, NULL);
+        #ifdef USE_MODULE_SETTINGS
+            // lv_obj_add_event_cb(ui_SwitchesControllerType, ui_event_Dropdown, LV_EVENT_VALUE_CHANGED, NULL);
+        #endif
+
+        lv_obj_add_event_cb(ui_Panel1, ui_event_Panel, LV_EVENT_CLICKED, NULL);
+        lv_obj_add_event_cb(ui_Panel2, ui_event_Panel, LV_EVENT_CLICKED, NULL);
+        lv_obj_add_event_cb(ui_Panel3, ui_event_Panel, LV_EVENT_CLICKED, NULL);
+        lv_obj_add_event_cb(ui_Panel4, ui_event_Panel, LV_EVENT_CLICKED, NULL);
+        lv_obj_add_event_cb(ui_Panel5, ui_event_Panel, LV_EVENT_CLICKED, NULL);
+        lv_obj_add_event_cb(ui_Panel6, ui_event_Panel, LV_EVENT_CLICKED, NULL);
+        lv_obj_add_event_cb(ui_Panel7, ui_event_Panel, LV_EVENT_CLICKED, NULL);
     #endif
-#endif
+
+    #ifdef SHOW_TABS_AT_LEFT
+        #ifdef USE_MODULE_CONTROLS
+            lv_obj_add_event_cb(lv_obj_get_child(ui_MainTabView, 0), controls_button_draw_event_cb, LV_EVENT_DRAW_PART_END, NULL);
+        #endif
+    #endif
 
     //Disable scroll animation
     #ifdef USE_MAIN_TAB_VIEW
@@ -204,45 +204,45 @@ void ui_init_screen(void)
 
     #ifdef USE_MAIN_TAB_VIEW
         #ifdef SHOW_TABS_AT_LEFT
-        ui_MainTabView = lv_tabview_create(ui_Main, LV_DIR_LEFT, 60);
+            ui_MainTabView = lv_tabview_create(ui_Main, LV_DIR_LEFT, 60);
         #else
-        ui_MainTabView = lv_tabview_create(ui_Main, LV_DIR_TOP, 60);
+            ui_MainTabView = lv_tabview_create(ui_Main, LV_DIR_TOP, 60);
         #endif
-    lv_obj_set_width(ui_MainTabView, lv_pct(100));
-    #ifdef SHOW_TOP_BAR
-        lv_obj_set_height(ui_MainTabView, lv_pct(90));
-    #else
-        lv_obj_set_height(ui_MainTabView, lv_pct(100));
-    #endif
-    lv_obj_set_x(ui_MainTabView, 0);
-    lv_obj_set_y(ui_MainTabView, 50);
-    lv_obj_set_align(ui_MainTabView, LV_ALIGN_CENTER);
-    lv_obj_clear_flag(ui_MainTabView, LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM |
-                      LV_OBJ_FLAG_SCROLL_CHAIN);     /// Flags
-    //lv_obj_set_style_bg_color(ui_MainTabView, lv_color_hex(0x333333), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_color(ui_MainTabView, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_opa(ui_MainTabView, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_width(ui_MainTabView, lv_pct(100));
+        #ifdef SHOW_TOP_BAR
+            lv_obj_set_height(ui_MainTabView, lv_pct(90));
+        #else
+            lv_obj_set_height(ui_MainTabView, lv_pct(100));
+        #endif
+        lv_obj_set_x(ui_MainTabView, 0);
+        lv_obj_set_y(ui_MainTabView, 50);
+        lv_obj_set_align(ui_MainTabView, LV_ALIGN_CENTER);
+        lv_obj_clear_flag(ui_MainTabView, LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM |
+                        LV_OBJ_FLAG_SCROLL_CHAIN);     /// Flags
+        //lv_obj_set_style_bg_color(ui_MainTabView, lv_color_hex(0x333333), LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_bg_color(ui_MainTabView, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_bg_opa(ui_MainTabView, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-    lv_obj_set_style_text_color(lv_tabview_get_tab_btns(ui_MainTabView), lv_color_hex(0xFEFEFE), LV_PART_ITEMS | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_opa(lv_tabview_get_tab_btns(ui_MainTabView), 255,  LV_PART_ITEMS | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(lv_tabview_get_tab_btns(ui_MainTabView), &lv_font_montserrat_18, LV_PART_ITEMS | LV_STATE_DEFAULT);
-    //lv_obj_set_style_bg_color(lv_tabview_get_tab_btns(ui_MainTabView), lv_color_hex(0x333333),
-    lv_obj_set_style_bg_color(lv_tabview_get_tab_btns(ui_MainTabView), lv_color_hex(0x000000), LV_PART_ITEMS | LV_STATE_DEFAULT);
+        lv_obj_set_style_text_color(lv_tabview_get_tab_btns(ui_MainTabView), lv_color_hex(0xFEFEFE), LV_PART_ITEMS | LV_STATE_DEFAULT);
+        lv_obj_set_style_text_opa(lv_tabview_get_tab_btns(ui_MainTabView), 255,  LV_PART_ITEMS | LV_STATE_DEFAULT);
+        lv_obj_set_style_text_font(lv_tabview_get_tab_btns(ui_MainTabView), &lv_font_montserrat_18, LV_PART_ITEMS | LV_STATE_DEFAULT);
+        //lv_obj_set_style_bg_color(lv_tabview_get_tab_btns(ui_MainTabView), lv_color_hex(0x333333),
+        lv_obj_set_style_bg_color(lv_tabview_get_tab_btns(ui_MainTabView), lv_color_hex(0x000000), LV_PART_ITEMS | LV_STATE_DEFAULT);
 
-    // Selected button (LV_STATE_CHECKED)
-    lv_obj_set_style_text_font(lv_tabview_get_tab_btns(ui_MainTabView), &lv_font_montserrat_24, LV_PART_ITEMS | LV_STATE_CHECKED);
-    lv_obj_set_style_text_color(lv_tabview_get_tab_btns(ui_MainTabView), lv_color_hex(0x000000), LV_PART_ITEMS | LV_STATE_CHECKED);
-    //lv_obj_set_style_bg_color(lv_tabview_get_tab_btns(ui_MainTabView), lv_color_hex(0xCACACA), LV_PART_ITEMS | LV_STATE_CHECKED);
+        // Selected button (LV_STATE_CHECKED)
+        lv_obj_set_style_text_font(lv_tabview_get_tab_btns(ui_MainTabView), &lv_font_montserrat_24, LV_PART_ITEMS | LV_STATE_CHECKED);
+        lv_obj_set_style_text_color(lv_tabview_get_tab_btns(ui_MainTabView), lv_color_hex(0x000000), LV_PART_ITEMS | LV_STATE_CHECKED);
+        //lv_obj_set_style_bg_color(lv_tabview_get_tab_btns(ui_MainTabView), lv_color_hex(0xCACACA), LV_PART_ITEMS | LV_STATE_CHECKED);
 
-    lv_obj_set_style_bg_opa(lv_tabview_get_tab_btns(ui_MainTabView), 255,  LV_PART_ITEMS | LV_STATE_DEFAULT);
-    lv_obj_set_style_border_color(lv_tabview_get_tab_btns(ui_MainTabView), lv_color_hex(0xCACACA), LV_PART_ITEMS | LV_STATE_DEFAULT);
-    lv_obj_set_style_border_opa(lv_tabview_get_tab_btns(ui_MainTabView), 255,  LV_PART_ITEMS | LV_STATE_DEFAULT);
-    lv_obj_set_style_border_width(lv_tabview_get_tab_btns(ui_MainTabView), 1,  LV_PART_ITEMS | LV_STATE_DEFAULT);
-    #ifdef SHOW_TABS_AT_LEFT
-        lv_obj_set_style_border_side(lv_tabview_get_tab_btns(ui_MainTabView), LV_BORDER_SIDE_RIGHT, LV_PART_ITEMS | LV_STATE_DEFAULT);
-    #else
-        lv_obj_set_style_border_side(lv_tabview_get_tab_btns(ui_MainTabView), LV_BORDER_SIDE_BOTTOM, LV_PART_ITEMS | LV_STATE_DEFAULT);
-    #endif
+        lv_obj_set_style_bg_opa(lv_tabview_get_tab_btns(ui_MainTabView), 255,  LV_PART_ITEMS | LV_STATE_DEFAULT);
+        lv_obj_set_style_border_color(lv_tabview_get_tab_btns(ui_MainTabView), lv_color_hex(0xCACACA), LV_PART_ITEMS | LV_STATE_DEFAULT);
+        lv_obj_set_style_border_opa(lv_tabview_get_tab_btns(ui_MainTabView), 255,  LV_PART_ITEMS | LV_STATE_DEFAULT);
+        lv_obj_set_style_border_width(lv_tabview_get_tab_btns(ui_MainTabView), 1,  LV_PART_ITEMS | LV_STATE_DEFAULT);
+        #ifdef SHOW_TABS_AT_LEFT
+            lv_obj_set_style_border_side(lv_tabview_get_tab_btns(ui_MainTabView), LV_BORDER_SIDE_RIGHT, LV_PART_ITEMS | LV_STATE_DEFAULT);
+        #else
+            lv_obj_set_style_border_side(lv_tabview_get_tab_btns(ui_MainTabView), LV_BORDER_SIDE_BOTTOM, LV_PART_ITEMS | LV_STATE_DEFAULT);
+        #endif
 
     #endif
 

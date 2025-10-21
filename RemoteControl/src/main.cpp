@@ -13,10 +13,6 @@
 #include <ESP32Time.h>
 #include <PNGdec.h>
 
-#include <LovyanGFX.hpp>
-#include <lgfx/v1/platforms/esp32s3/Panel_RGB.hpp>
-#include <lgfx/v1/platforms/esp32s3/Bus_RGB.hpp>
-
 #include "UI/ui.h"
 #include "UI/ui_screen.h"
 #include "UI/ui_buttons.h"
@@ -24,13 +20,16 @@
 
 #include "../lvgl/lvgl.h"
 
+#include "../include/lgfx.h"
 #include "../include/defines.h"
 #include "../include/debug.h"
 #include "../include/structs.h"
 #include "../include/settings.h"
+#ifdef USE_MULTI_THREAD
+  #include "../include/tasks.h"
+#endif
 
-#define STATE_OFF HIGH
-#define STATE_ON LOW
+#include "touch.h"
 
 static uint32_t screenWidth;
 static uint32_t screenHeight;
@@ -63,12 +62,12 @@ Settings *mySettings;
 
   // Semaphores
   SemaphoreHandle_t semaphoreData;
-#else
-  long now;  
 #endif
 
+long now;  
+
 TwoWire I2Cone = TwoWire(0);
-Adafruit_SSD1306 display = Adafruit_SSD1306(128, 64, &I2Cone,OLED_RESET);
+Adafruit_SSD1306 display = Adafruit_SSD1306(128, 64, &I2Cone, OLED_RESET);
 
 SPIClass& spi = SPI;
 uint16_t touchCalibration_x0 = 300, touchCalibration_x1 = 3600, touchCalibration_y0 = 300, touchCalibration_y1 = 3600;
@@ -76,213 +75,8 @@ uint8_t  touchCalibration_rotate = 1, touchCalibration_invert_x = 2, touchCalibr
 
 Debug *debug;
 
-class LGFX : public lgfx::LGFX_Device
-{
-public:
 
-  lgfx::Bus_RGB     _bus_instance;
-  lgfx::Panel_RGB   _panel_instance;
-  #if defined(ELECROW_DISPLAY_35)
-  LGFX(void)
-  {
-    {                                      
-      auto cfg = _bus_instance.config(); 
-
-      cfg.port = 0;              
-      cfg.freq_write = 80000000; 
-      cfg.pin_wr = GPIO_NUM_18;
-      cfg.pin_rd = GPIO_NUM_48;
-      cfg.pin_rs = GPIO_NUM_45;
-
-      cfg.pin_d0 = GPIO_NUM_47;
-      cfg.pin_d1 = GPIO_NUM_21;
-      cfg.pin_d2 = GPIO_NUM_14;
-      cfg.pin_d3 = GPIO_NUM_13;
-      cfg.pin_d4 = GPIO_NUM_12;
-      cfg.pin_d5 = GPIO_NUM_11;
-      cfg.pin_d6 = GPIO_NUM_10;
-      cfg.pin_d7 = GPIO_NUM_9;
-      cfg.pin_d8 = GPIO_NUM_3;
-      cfg.pin_d9 = GPIO_NUM_8;
-      cfg.pin_d10 = GPIO_NUM_16;
-      cfg.pin_d11 = GPIO_NUM_15;
-      cfg.pin_d12 = GPIO_NUM_7;
-      cfg.pin_d13 = GPIO_NUM_6;
-      cfg.pin_d14 = GPIO_NUM_5;
-      cfg.pin_d15 = GPIO_NUM_4;
-
-      _bus_instance.config(cfg);              
-      _panel_instance.setBus(&_bus_instance); 
-    }
-    {                                        
-      auto cfg = _panel_instance.config();
-
-      cfg.pin_cs = -1;   
-      cfg.pin_rst = -1;  
-      cfg.pin_busy = -1; 
-
-      cfg.memory_width = 320;   
-      cfg.memory_height = 480;  
-      cfg.panel_width = 320;    
-      cfg.panel_height = 480;   
-      cfg.offset_x = 0;         
-      cfg.offset_y = 0;         
-      cfg.offset_rotation = 0;  
-      cfg.dummy_read_pixel = 8; 
-      cfg.dummy_read_bits = 1;  
-      cfg.readable = true;      
-      cfg.invert = false;     
-      cfg.rgb_order = false;    
-      cfg.dlen_16bit = true;    
-      cfg.bus_shared = true;    
-
-      _panel_instance.config(cfg);
-    }
-    setPanel(&_panel_instance);
-  }
-
-  #elif defined(ELECROW_DISPLAY_50)
-  LGFX(void)
-  {
-    {
-      auto cfg = _bus_instance.config();
-      cfg.panel = &_panel_instance;
-      
-      cfg.pin_d0  = GPIO_NUM_8; // B0
-      cfg.pin_d1  = GPIO_NUM_3;  // B1
-      cfg.pin_d2  = GPIO_NUM_46;  // B2
-      cfg.pin_d3  = GPIO_NUM_9;  // B3
-      cfg.pin_d4  = GPIO_NUM_1;  // B4
-      
-      cfg.pin_d5  = GPIO_NUM_5;  // G0
-      cfg.pin_d6  = GPIO_NUM_6; // G1
-      cfg.pin_d7  = GPIO_NUM_7;  // G2
-      cfg.pin_d8  = GPIO_NUM_15;  // G3
-      cfg.pin_d9  = GPIO_NUM_16; // G4
-      cfg.pin_d10 = GPIO_NUM_4;  // G5
-      
-      cfg.pin_d11 = GPIO_NUM_45; // R0
-      cfg.pin_d12 = GPIO_NUM_48; // R1
-      cfg.pin_d13 = GPIO_NUM_47; // R2
-      cfg.pin_d14 = GPIO_NUM_21; // R3
-      cfg.pin_d15 = GPIO_NUM_14; // R4
-
-      cfg.pin_henable = GPIO_NUM_40;
-      cfg.pin_vsync   = GPIO_NUM_41;
-      cfg.pin_hsync   = GPIO_NUM_39;
-      cfg.pin_pclk    = GPIO_NUM_0;
-      cfg.freq_write  = 15000000;
-
-      cfg.hsync_polarity    = 0;
-      cfg.hsync_front_porch = 8;
-      cfg.hsync_pulse_width = 4;
-      cfg.hsync_back_porch  = 43;
-      
-      cfg.vsync_polarity    = 0;
-      cfg.vsync_front_porch = 8;
-      cfg.vsync_pulse_width = 4;
-      cfg.vsync_back_porch  = 12;
-
-      cfg.pclk_active_neg   = 1;
-      cfg.de_idle_high      = 0;
-      cfg.pclk_idle_high    = 0;
-
-      _bus_instance.config(cfg);
-    }
-    {
-      auto cfg = _panel_instance.config();
-      cfg.memory_width  = 800;
-      cfg.memory_height = 480;
-      cfg.panel_width  = 800;
-      cfg.panel_height = 480;
-      cfg.offset_x = 0;
-      cfg.offset_y = 0;
-      _panel_instance.config(cfg);
-    }
-    _panel_instance.setBus(&_bus_instance);
-    setPanel(&_panel_instance);
-  }
-  #elif defined(ELECROW_DISPLAY_70)
-  // Constructor for the LGFX class.
-  LGFX(void) {
-    // Configure the RGB bus.
-    {
-      auto cfg = _bus_instance.config();
-      cfg.panel = &_panel_instance;
-
-      // Configure data pins.
-      cfg.pin_d0  = GPIO_NUM_15; // B0
-      cfg.pin_d1  = GPIO_NUM_7;  // B1
-      cfg.pin_d2  = GPIO_NUM_6;  // B2
-      cfg.pin_d3  = GPIO_NUM_5;  // B3
-      cfg.pin_d4  = GPIO_NUM_4;  // B4
-      
-      cfg.pin_d5  = GPIO_NUM_9;  // G0
-      cfg.pin_d6  = GPIO_NUM_46; // G1
-      cfg.pin_d7  = GPIO_NUM_3;  // G2
-      cfg.pin_d8  = GPIO_NUM_8;  // G3
-      cfg.pin_d9  = GPIO_NUM_16; // G4
-      cfg.pin_d10 = GPIO_NUM_1;  // G5
-      
-      cfg.pin_d11 = GPIO_NUM_14; // R0
-      cfg.pin_d12 = GPIO_NUM_21; // R1
-      cfg.pin_d13 = GPIO_NUM_47; // R2
-      cfg.pin_d14 = GPIO_NUM_48; // R3
-      cfg.pin_d15 = GPIO_NUM_45; // R4
-
-      // Configure sync and clock pins.
-      cfg.pin_henable = GPIO_NUM_41;
-      cfg.pin_vsync   = GPIO_NUM_40;
-      cfg.pin_hsync   = GPIO_NUM_39;
-      cfg.pin_pclk    = GPIO_NUM_0;
-      cfg.freq_write  = 15000000;
-
-      // Configure timing parameters for horizontal and vertical sync.
-      cfg.hsync_polarity    = 0;
-      cfg.hsync_front_porch = 40;
-      cfg.hsync_pulse_width = 48;
-      cfg.hsync_back_porch  = 40;
-      
-      cfg.vsync_polarity    = 0;
-      cfg.vsync_front_porch = 1;
-      cfg.vsync_pulse_width = 31;
-      cfg.vsync_back_porch  = 13;
-
-      // Configure polarity for clock and data transmission.
-      cfg.pclk_active_neg   = 1;
-      cfg.de_idle_high      = 0;
-      cfg.pclk_idle_high    = 0;
-
-      // Apply configuration to the RGB bus instance.
-      _bus_instance.config(cfg);
-    }
-
-    // Configure the panel.
-    {
-      auto cfg = _panel_instance.config();
-      cfg.memory_width  = 800;
-      cfg.memory_height = 480;
-      cfg.panel_width   = 800;
-      cfg.panel_height  = 480;
-      cfg.offset_x      = 0;
-      cfg.offset_y      = 0;
-
-      // Apply configuration to the panel instance.
-      _panel_instance.config(cfg);
-    }
-
-    // Set the RGB bus and panel instances.
-    _panel_instance.setBus(&_bus_instance);
-    setPanel(&_panel_instance);
-  }
-  #else
-    #error "No Display size defined!"
-  #endif  
-  
-};
-
-LGFX lcd;
-#include "touch.h"
+// Elecrow Display callbacks
 
 /* Display flushing */
 void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
@@ -409,11 +203,15 @@ void loadSettings() {
     mySettings->load();    
   #endif
   
-  if (mySettings->IsWaitRelay()) {
-    lv_obj_add_state(ui_WaitRelay, LV_STATE_CHECKED);
-  } else {
-    lv_obj_add_state(ui_WaitRelay, LV_STATE_DEFAULT);
-  }
+  #ifdef USE_MODULE_SETTINGS
+    #ifdef USE_MODULE_CONTROLS
+      if (mySettings->IsWaitRelay()) {
+        lv_obj_add_state(ui_WaitRelay, LV_STATE_CHECKED);
+      } else {
+        lv_obj_add_state(ui_WaitRelay, LV_STATE_DEFAULT);
+      }
+    #endif
+  #endif
 }
 
 void startRTC() {
@@ -449,6 +247,7 @@ void initializeLVGL() {
   lv_init();
 }
 
+#ifdef USE_MODULE_CONTROLS
 void setupButton(int idx, bool enabled, int state, lv_obj_t *obj, uint32_t colorOn, uint32_t colorOff) {
 
   buttons[idx].enabled = enabled;
@@ -460,7 +259,6 @@ void setupButton(int idx, bool enabled, int state, lv_obj_t *obj, uint32_t color
 
 }
 
-#ifdef USE_MODULE_CONTROLS
 void setupButtons() {
 
   debug->println(DEBUG_LEVEL_INFO, "Creating Buttons...");
@@ -492,8 +290,14 @@ esp_err_t sendToRelay(int btnId, int state) {
   espNowPacket.value = state;
 
   if (!mySettings->IsWaitRelay()) {
+    #ifdef USE_MULTI_THREAD
+      xSemaphoreTake(semaphoreData, portMAX_DELAY);
+    #endif
     buttons[btnId].state = state;
     buttons[btnId].needsUpdate = true;
+    #ifdef USE_MULTI_THREAD
+      xSemaphoreGive(semaphoreData);
+    #endif
   }
  
   return esp_now_send(bs8_address, (uint8_t *) &espNowPacket, sizeof(s_espNow));
@@ -608,12 +412,18 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len) {
   if (type == 2) { // Buttons
     switchesLastSignal = now;
     switchesLastAlive = now;
+    #ifdef USE_MULTI_THREAD
+      xSemaphoreTake(semaphoreData, portMAX_DELAY);
+    #endif
     if (buttons[id].obj != nullptr && buttons[id].state != value) {
       buttons[id].state = value;
       buttons[id].needsUpdate = true;
     } else {
       buttons[id].needsUpdate = false;
     }
+    #ifdef USE_MULTI_THREAD
+      xSemaphoreGive(semaphoreData);
+    #endif
   }
 }
 
@@ -663,6 +473,31 @@ void createSemaphores() {
 void createTasks() {
 #ifdef USE_MULTI_THREAD
   debug->println(DEBUG_LEVEL_INFO, "Creating Tasks...");
+  #ifdef DISPLAY_AT_CORE1
+    debug->println(DEBUG_LEVEL_INFO, "Staring up Display Manager...");
+
+    xTaskCreatePinnedToCore(
+      tft_task,       // Task function.
+      "TFT_Manager",  // Name of task.
+      10000,          // Stack size of task
+      NULL,           // Parameter of the task
+      0,              // Priority of the task
+      &t_core1_tft,   // Task handle to keep track of created task
+      1);             // Pin task to core 1
+
+    vTaskSuspend(t_core1_tft);
+  #endif
+
+  // other tasks here
+
+  debug->println(DEBUG_LEVEL_INFO, "Setup completed\nStarting tasks...");
+
+  #ifdef DISPLAY_AT_CORE1
+    debug->println(DEBUG_LEVEL_INFO, "Starting Display...");
+    vTaskResume(t_core1_tft);
+    delay(200);
+  #endif
+
 #endif
 }
 

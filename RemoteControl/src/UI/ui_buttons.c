@@ -30,18 +30,35 @@ void ui_event_Panel(lv_event_t * e)
 
 void ui_init_buttons(lv_obj_t *parent) {
 
-    #ifdef SHOW_TABS_AT_LEFT
-    ui_ViewControls = lv_tabview_add_tab(parent, " ");
+    #ifdef USE_MAIN_TAB_VIEW
+        #ifdef SHOW_TABS_AT_LEFT
+            ui_ViewControls = lv_tabview_add_tab(parent, " ");
+        #else
+            ui_ViewControls = lv_tabview_add_tab(parent, "Controls");
+        #endif
     #else
-    ui_ViewControls = lv_tabview_add_tab(parent, "Controls");
+        ui_ViewControls = lv_obj_create(parent);
+        lv_obj_remove_style_all(ui_ViewControls);
+        lv_obj_set_width(ui_ViewControls, lv_pct(100));
+        #ifdef SHOW_TOP_BAR
+            lv_obj_set_height(ui_ViewControls, lv_pct(90));
+        #else
+            lv_obj_set_height(ui_ViewControls, lv_pct(100));
+        #endif
+        lv_obj_set_x(ui_ViewControls, 0);
+        lv_obj_set_y(ui_ViewControls, 50);
+        lv_obj_set_align(ui_ViewControls, LV_ALIGN_CENTER);
+        lv_obj_set_style_bg_color(ui_ViewControls, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_bg_opa(ui_ViewControls, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     #endif
     lv_obj_set_flex_flow(ui_ViewControls, LV_FLEX_FLOW_COLUMN);
     lv_obj_set_flex_align(ui_ViewControls, LV_FLEX_ALIGN_SPACE_AROUND, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_SPACE_AROUND);
     lv_obj_clear_flag(ui_ViewControls, LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM |
-                      LV_OBJ_FLAG_SCROLL_CHAIN);     /// Flags
+                    LV_OBJ_FLAG_SCROLL_CHAIN);     /// Flags
     lv_obj_set_scrollbar_mode(ui_ViewControls, LV_SCROLLBAR_MODE_OFF);
-
+        
     ui_ContainerControls1 = lv_obj_create(ui_ViewControls);
+    
     lv_obj_remove_style_all(ui_ContainerControls1);
     lv_obj_set_width(ui_ContainerControls1, lv_pct(100));
     lv_obj_set_height(ui_ContainerControls1, lv_pct(40));

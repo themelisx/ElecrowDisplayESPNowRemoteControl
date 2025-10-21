@@ -41,6 +41,8 @@
 // #define TOUCH_MAP_Y1 100
 // #define TOUCH_MAP_Y2 4000
 
+LGFX lcd;
+
 int touch_last_x = 0, touch_last_y = 0;
 
 #if defined(TOUCH_FT6X36)

@@ -5,6 +5,9 @@
 
 #define BUTTONS_ON_SCREEN 7
 
+#define STATE_OFF HIGH
+#define STATE_ON LOW
+
 // EEPROM position (0 and 1 are reserved)
 #define EEPROM_WAIT_RELAY 2
 
@@ -37,6 +40,7 @@
 
 // Other defines
 #define DELAY_MAIN_TASK 10
+#define DELAY_REFRESH_VIEW 10
 #define OLED_RESET     -1 
 
 #define TFT_BL 2
