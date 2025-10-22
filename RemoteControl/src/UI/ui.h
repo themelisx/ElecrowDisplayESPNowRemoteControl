@@ -13,6 +13,9 @@ extern "C" {
 #include "defines.h"
 #include "../lvgl/lvgl.h"
 
+#include "../fonts/fonts.h"
+#include "../../include/configuration.h"
+
 #include "ui_helpers.h"
 
 // main
