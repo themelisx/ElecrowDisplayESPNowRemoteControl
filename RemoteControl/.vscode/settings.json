@@ -20,7 +20,8 @@
         "utility": "c",
         "lv_conf_internal.h": "c",
         "thread": "cpp",
-        "atomic": "cpp"
+        "atomic": "cpp",
+        "ui_settings.h": "c"
     },
     "idf.adapterTargetName": "esp32",
     "idf.openOcdConfigs": [

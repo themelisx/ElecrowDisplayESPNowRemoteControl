@@ -272,13 +272,24 @@ void setupButtons() {
   setupButton(7, true, STATE_OFF, ui_Panel6, COLOR_BLUE, BUTTON_BACKGROUND);
   setupButton(8, false, STATE_OFF, nullptr, 0, 0);
 
+  #if defined(LANG_EN)
   lv_label_set_text(ui_ControlLabel1, "Main LED Bar");
   lv_label_set_text(ui_ControlLabel2, "Roof LED Bar");
   lv_label_set_text(ui_ControlLabel3, "Roof Lights");
   lv_label_set_text(ui_ControlLabel4, "Left Lights");
   lv_label_set_text(ui_ControlLabel5, "Right Lights");
   lv_label_set_text(ui_ControlLabel6, "Rear Lights");
-  lv_label_set_text(ui_ControlLabel7, "Emergency Strobe Lights");    
+  lv_label_set_text(ui_ControlLabel7, "Emergency Strobe Lights");
+  #elif defined(LANG_GR)
+  lv_label_set_text(ui_ControlLabel1, "Μεγάλη μπάρα");
+  lv_label_set_text(ui_ControlLabel2, "Μπάρα οροφής");
+  lv_label_set_text(ui_ControlLabel3, "Φώτα οροφής");
+  lv_label_set_text(ui_ControlLabel4, "Φώτα αριστερά");
+  lv_label_set_text(ui_ControlLabel5, "Φώτα δεξιά");
+  lv_label_set_text(ui_ControlLabel6, "Φώτα πίσω");
+  lv_label_set_text(ui_ControlLabel7, "Φώτα έκτακτης ανάγκης");
+  #endif
+  
 }
 #endif
 

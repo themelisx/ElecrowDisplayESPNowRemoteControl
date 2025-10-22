@@ -1,7 +1,7 @@
 //////////////
 // Settings //
 //////////////
-//#define USE_MAIN_TAB_VIEW
+#define USE_MAIN_TAB_VIEW
 #ifdef USE_MAIN_TAB_VIEW
     //#define SHOW_TABS_AT_LEFT
     //#define USE_HOME_PAGE
@@ -27,6 +27,10 @@
 // Multithread
 #define USE_MULTI_THREAD
 #define DISPLAY_AT_CORE1
+
+// Language
+//#define LANG_EN
+#define LANG_GR
 
 ////////////
 // EEPROM //

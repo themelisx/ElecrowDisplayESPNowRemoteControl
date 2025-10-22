@@ -198,7 +198,7 @@ void ui_init_screen(void)
             lv_label_set_text(ui_DateTime, "00:00");
             lv_obj_set_style_text_color(ui_DateTime, lv_color_hex(0xD3D3D3), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_opa(ui_DateTime, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_obj_set_style_text_font(ui_DateTime, &lv_font_montserrat_32, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_font(ui_DateTime, &lv_font_arial_32, LV_PART_MAIN | LV_STATE_DEFAULT);
         #endif
     #endif
 
@@ -225,12 +225,12 @@ void ui_init_screen(void)
 
         lv_obj_set_style_text_color(lv_tabview_get_tab_btns(ui_MainTabView), lv_color_hex(0xFEFEFE), LV_PART_ITEMS | LV_STATE_DEFAULT);
         lv_obj_set_style_text_opa(lv_tabview_get_tab_btns(ui_MainTabView), 255,  LV_PART_ITEMS | LV_STATE_DEFAULT);
-        lv_obj_set_style_text_font(lv_tabview_get_tab_btns(ui_MainTabView), &lv_font_montserrat_18, LV_PART_ITEMS | LV_STATE_DEFAULT);
+        lv_obj_set_style_text_font(lv_tabview_get_tab_btns(ui_MainTabView), &lv_font_arial_18, LV_PART_ITEMS | LV_STATE_DEFAULT);
         //lv_obj_set_style_bg_color(lv_tabview_get_tab_btns(ui_MainTabView), lv_color_hex(0x333333),
         lv_obj_set_style_bg_color(lv_tabview_get_tab_btns(ui_MainTabView), lv_color_hex(0x000000), LV_PART_ITEMS | LV_STATE_DEFAULT);
 
         // Selected button (LV_STATE_CHECKED)
-        lv_obj_set_style_text_font(lv_tabview_get_tab_btns(ui_MainTabView), &lv_font_montserrat_24, LV_PART_ITEMS | LV_STATE_CHECKED);
+        lv_obj_set_style_text_font(lv_tabview_get_tab_btns(ui_MainTabView), &lv_font_arial_24, LV_PART_ITEMS | LV_STATE_CHECKED);
         lv_obj_set_style_text_color(lv_tabview_get_tab_btns(ui_MainTabView), lv_color_hex(0x000000), LV_PART_ITEMS | LV_STATE_CHECKED);
         //lv_obj_set_style_bg_color(lv_tabview_get_tab_btns(ui_MainTabView), lv_color_hex(0xCACACA), LV_PART_ITEMS | LV_STATE_CHECKED);
 
