@@ -1,8 +1,3 @@
-#include <WiFi.h>
-#include "esp_wifi.h"
-#include <esp_now.h>
-#include <HttpClient.h>
-#include <WiFiClient.h>
 #include <ArduinoJson.h> 
 #include <Preferences.h>
 
@@ -22,9 +17,11 @@
 
 #include "../include/lgfx.h"
 #include "../include/defines.h"
-#include "../include/debug.h"
+#include "myDebug.h"
 #include "../include/structs.h"
 #include "../include/settings.h"
+#include "myWifi.h"
+#include "../include/mySwitches.h"
 #ifdef USE_MULTI_THREAD
   #include "../include/tasks.h"
 #endif
@@ -38,21 +35,17 @@ static lv_color_t disp_draw_buf[800 * 480 / 10];
 //static lv_color_t disp_draw_buf;
 static lv_disp_drv_t disp_drv;
 
-char macStr[18];
-uint8_t bs8_address[] = {0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6};
-esp_now_peer_info_t peerInfo;
+uint8_t bs8_address[6] = {0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6};
 
 ESP32Time rtc(0);
 char time_str[9];
-
-uint8_t WiFiChannel;
-s_espNow espNowPacket;
-s_espNowButtons buttons[10];
-
-long switchesLastAlive;
-long switchesLastSignal;
+char macStr[18];
 
 Settings *mySettings;
+MyWiFi *myWiFi;
+MySwitches *mySwitches;
+
+s_espNow espNowPacket;
 
 #ifdef USE_MULTI_THREAD
   // Tasks
@@ -73,7 +66,7 @@ SPIClass& spi = SPI;
 uint16_t touchCalibration_x0 = 300, touchCalibration_x1 = 3600, touchCalibration_y0 = 300, touchCalibration_y1 = 3600;
 uint8_t  touchCalibration_rotate = 1, touchCalibration_invert_x = 2, touchCalibration_invert_y = 0;
 
-Debug *debug;
+MyDebug *myDebug;
 
 
 // Elecrow Display callbacks
@@ -107,10 +100,10 @@ void my_touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
       data->point.x = touch_last_x;
       data->point.y = touch_last_y;
       #ifndef MODE_RELEASE
-        debug->print(DEBUG_LEVEL_DEBUG2, "Data x :" );
-        debug->println(DEBUG_LEVEL_DEBUG2, touch_last_x );
-        debug->print(DEBUG_LEVEL_DEBUG2, "Data y :" );
-        debug->println(DEBUG_LEVEL_DEBUG2, touch_last_y );
+        myDebug->print(DEBUG_LEVEL_DEBUG2, "Data x :" );
+        myDebug->println(DEBUG_LEVEL_DEBUG2, touch_last_x );
+        myDebug->print(DEBUG_LEVEL_DEBUG2, "Data y :" );
+        myDebug->println(DEBUG_LEVEL_DEBUG2, touch_last_y );
       #endif
     }
     else if (touch_released())
@@ -127,9 +120,9 @@ void my_touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
 
 void initializeUI() {  
 
-  debug->println(DEBUG_LEVEL_INFO, "initialize UI...");  
+  myDebug->println(DEBUG_LEVEL_INFO, "initialize UI...");  
   ui_init();
-  #ifdef USE_MODULE_CONTROLS
+  #ifdef USE_MODULE_SWITCHES
     #ifdef USE_MAIN_TAB_VIEW
       ui_init_buttons(ui_MainTabView);
     #else
@@ -156,7 +149,7 @@ void initializeUI() {
   
 }
 void setupDisplay() {
-  debug->println(DEBUG_LEVEL_INFO, "Configuring display...");
+  myDebug->println(DEBUG_LEVEL_INFO, "Configuring display...");
 
   screenWidth = lcd.width();
   screenHeight = lcd.height();
@@ -187,7 +180,7 @@ void setupDisplay() {
 }
 
 void initializeDisplay() {
-  debug->println(DEBUG_LEVEL_INFO, "Initializing display...");
+  myDebug->println(DEBUG_LEVEL_INFO, "Initializing display...");
   lcd.begin();
   lcd.fillScreen(0x000000u);
   lcd.setTextSize(2); 
@@ -204,7 +197,7 @@ void loadSettings() {
   #endif
   
   #ifdef USE_MODULE_SETTINGS
-    #ifdef USE_MODULE_CONTROLS
+    #ifdef USE_MODULE_SWITCHES
       if (mySettings->IsWaitRelay()) {
         lv_obj_add_state(ui_WaitRelay, LV_STATE_CHECKED);
       } else {
@@ -216,61 +209,54 @@ void loadSettings() {
 
 void startRTC() {
   #ifdef ENABLE_RTC_CLOCK
-    debug->println(DEBUG_LEVEL_INFO, "Starting RTC...");
+    myDebug->println(DEBUG_LEVEL_INFO, "Starting RTC...");
     myRTC.start();
   #endif
 }
 
 void initializeDebug() {
   // Initialize Serial and set debug level
-  debug = new Debug();
+  myDebug = new MyDebug();
   #if defined(MODE_DEBUG_FULL)
-    debug->start(115200, DEBUG_LEVEL_DEBUG2);
+    myDebug->start(115200, DEBUG_LEVEL_DEBUG2);
   #elif defined(MODE_DEBUG)
-    debug->start(115200, DEBUG_LEVEL_DEBUG);
+    myDebug->start(115200, DEBUG_LEVEL_DEBUG);
   #elif defined(MODE_RELEASE_INFO)
-    debug->start(115200, DEBUG_LEVEL_INFO);
+    myDebug->start(115200, DEBUG_LEVEL_INFO);
   #elif defined(MODE_RELEASE)
-    debug->start(115200, DEBUG_LEVEL_NONE);
+    myDebug->start(115200, DEBUG_LEVEL_NONE);
   #else
     #error "Select build mode for logs"
   #endif  
 }
 
 void initializeTouchScreen() {
-  debug->println(DEBUG_LEVEL_INFO, "Initializing touch screen...");
+  myDebug->println(DEBUG_LEVEL_INFO, "Initializing touch screen...");
   touch_init();
 }
 
 void initializeLVGL() {
-  debug->println(DEBUG_LEVEL_INFO, "Initializing LVGL...");
+  myDebug->println(DEBUG_LEVEL_INFO, "Initializing LVGL...");
   lv_init();
 }
 
-#ifdef USE_MODULE_CONTROLS
-void setupButton(int idx, bool enabled, int state, lv_obj_t *obj, uint32_t colorOn, uint32_t colorOff) {
-
-  buttons[idx].enabled = enabled;
-  buttons[idx].state = state;
-  buttons[idx].needsUpdate = true;
-  buttons[idx].obj = obj;
-  buttons[idx].colorOn = colorOn;
-  buttons[idx].colorOff = colorOff;
-
+void onWaitRelayPressed(bool pressed) {
+  mySettings->setWaitRelay(pressed);
 }
 
+#ifdef USE_MODULE_SWITCHES
 void setupButtons() {
 
-  debug->println(DEBUG_LEVEL_INFO, "Creating Buttons...");
+  myDebug->println(DEBUG_LEVEL_INFO, "Creating Buttons...");
 
-  setupButton(1, true, STATE_OFF, ui_Panel1, COLOR_BLUE, BUTTON_BACKGROUND);
-  setupButton(2, true, STATE_OFF, ui_Panel2, COLOR_BLUE, BUTTON_BACKGROUND);
-  setupButton(3, true, STATE_OFF, ui_Panel3, COLOR_BLUE, BUTTON_BACKGROUND);
-  setupButton(4, true, STATE_OFF, ui_Panel7, COLOR_RED, BUTTON_BACKGROUND);
-  setupButton(5, true, STATE_OFF, ui_Panel4, COLOR_BLUE, BUTTON_BACKGROUND);
-  setupButton(6, true, STATE_OFF, ui_Panel5, COLOR_BLUE, BUTTON_BACKGROUND);
-  setupButton(7, true, STATE_OFF, ui_Panel6, COLOR_BLUE, BUTTON_BACKGROUND);
-  setupButton(8, false, STATE_OFF, nullptr, 0, 0);
+  mySwitches->setupButton(1, true, STATE_OFF, ui_Panel1, COLOR_BLUE, BUTTON_BACKGROUND);
+  mySwitches->setupButton(2, true, STATE_OFF, ui_Panel2, COLOR_BLUE, BUTTON_BACKGROUND);
+  mySwitches->setupButton(3, true, STATE_OFF, ui_Panel3, COLOR_BLUE, BUTTON_BACKGROUND);
+  mySwitches->setupButton(4, true, STATE_OFF, ui_Panel7, COLOR_RED, BUTTON_BACKGROUND);
+  mySwitches->setupButton(5, true, STATE_OFF, ui_Panel4, COLOR_BLUE, BUTTON_BACKGROUND);
+  mySwitches->setupButton(6, true, STATE_OFF, ui_Panel5, COLOR_BLUE, BUTTON_BACKGROUND);
+  mySwitches->setupButton(7, true, STATE_OFF, ui_Panel6, COLOR_BLUE, BUTTON_BACKGROUND);
+  mySwitches->setupButton(8, false, STATE_OFF, nullptr, 0, 0);
 
   #if defined(LANG_EN)
   lv_label_set_text(ui_ControlLabel1, "Main LED Bar");
@@ -291,62 +277,9 @@ void setupButtons() {
   #endif
   
 }
-#endif
 
-esp_err_t sendToRelay(int btnId, int state) {
-  
-  debug->println(DEBUG_LEVEL_INFO, "Sending esp_now to Relay");  
-  espNowPacket.type = 2; //Buttons
-  espNowPacket.id = btnId;
-  espNowPacket.value = state;
-
-  if (!mySettings->IsWaitRelay()) {
-    #ifdef USE_MULTI_THREAD
-      xSemaphoreTake(semaphoreData, portMAX_DELAY);
-    #endif
-    buttons[btnId].state = state;
-    buttons[btnId].needsUpdate = true;
-    #ifdef USE_MULTI_THREAD
-      xSemaphoreGive(semaphoreData);
-    #endif
-  }
- 
-  return esp_now_send(bs8_address, (uint8_t *) &espNowPacket, sizeof(s_espNow));
-}
-
-void onWaitRelayPressed(bool pressed) {
-  mySettings->setWaitRelay(pressed);
-}
-
-#ifdef USE_MODULE_CONTROLS
 void btnClick(uint8_t btnId) {
-
-  uint8_t state = buttons[btnId].state;
-
-  if (state == STATE_OFF) {
-    state = STATE_ON;
-  } else {
-    state = STATE_OFF;
-  }
-
-  #ifndef MODE_RELEASE
-    debug->print(DEBUG_LEVEL_DEBUG, "Request change for id ");
-    debug->print(DEBUG_LEVEL_DEBUG, btnId);
-    debug->print(DEBUG_LEVEL_DEBUG, ", new state = ");
-    debug->println(DEBUG_LEVEL_DEBUG, state);
-  #endif
-
-  #ifndef MODE_RELEASE
-    esp_err_t result = sendToRelay(btnId, state);
-    if (result == ESP_OK) {
-      debug->println(DEBUG_LEVEL_DEBUG, " [OK]");
-    } else {
-      debug->println(DEBUG_LEVEL_DEBUG, " [ERROR]");
-      debug->println(DEBUG_LEVEL_ERROR, esp_err_to_name(result));
-    }    
-  #else
-    sendToRelay(btnId, state);
-  #endif
+  mySwitches->btnClick(btnId);
 }
 
 void onMainBar(lv_event_t * e)
@@ -385,95 +318,6 @@ void onStrobeLights(lv_event_t * e)
 }
 #endif
 
-#ifndef MODE_RELEASE
-// Callback when data is sent
-void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
-  
-    debug->print(DEBUG_LEVEL_DEBUG2, "Packet to: ");
-    // Copies the sender mac address to a string
-    snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
-            mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
-    debug->print(DEBUG_LEVEL_DEBUG2, macStr);
-    debug->print(DEBUG_LEVEL_DEBUG2, " send status:\t");
-    debug->println(DEBUG_LEVEL_DEBUG2, status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
-
-}
-#endif
-
-// Callback when data is received
-void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len) {
-
-  #ifndef MODE_RELEASE
-    debug->print(DEBUG_LEVEL_DEBUG2, "Packet from: ");
-    // Copies the sender mac address to a string
-    snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
-            mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
-    debug->println(DEBUG_LEVEL_DEBUG2, macStr);
-    debug->print(DEBUG_LEVEL_DEBUG2, "Bytes received: ");
-    debug->println(DEBUG_LEVEL_DEBUG2, len);
-  #endif
-
-  memcpy(&espNowPacket, incomingData, sizeof(espNowPacket));
-  int16_t type = espNowPacket.type;
-  int16_t id = espNowPacket.id;
-  int16_t value = espNowPacket.value;
-
-  now = millis();
-
-  if (type == 2) { // Buttons
-    switchesLastSignal = now;
-    switchesLastAlive = now;
-    #ifdef USE_MULTI_THREAD
-      xSemaphoreTake(semaphoreData, portMAX_DELAY);
-    #endif
-    if (buttons[id].obj != nullptr && buttons[id].state != value) {
-      buttons[id].state = value;
-      buttons[id].needsUpdate = true;
-    } else {
-      buttons[id].needsUpdate = false;
-    }
-    #ifdef USE_MULTI_THREAD
-      xSemaphoreGive(semaphoreData);
-    #endif
-  }
-}
-
-void initializeEspNow() {
-
-  debug->println(DEBUG_LEVEL_INFO, "Initializing ESP-NOW...");
- 
-  WiFi.mode(WIFI_STA);
-  
-  debug->print(DEBUG_LEVEL_INFO, "MAC Address: ");
-  debug->println(DEBUG_LEVEL_INFO, WiFi.macAddress());
-
-  // Init ESP-NOW
-  if (esp_now_init() != ESP_OK) {
-    debug->println(DEBUG_LEVEL_ERROR, "Error initializing ESP-NOW");
-  }
-
-  // Once ESPNow is successfully Init, we will register for Send CB to
-  // get the status of Trasnmitted packet
-  #ifndef MODE_RELEASE
-    esp_now_register_send_cb(OnDataSent);
-  #endif
-
-  // register peer
-  peerInfo.channel = 0;  
-  peerInfo.encrypt = false;
-
-  // register first peer  
-  memcpy(peerInfo.peer_addr, bs8_address, 6);
-  if (esp_now_add_peer(&peerInfo) != ESP_OK) {
-    debug->println(DEBUG_LEVEL_ERROR, "Failed to add BS-8 peer");
-  } else {
-    debug->println(DEBUG_LEVEL_INFO, "BS-8 client added");
-  }
-
-  // Register for a callback function that will be called when data is received
-  esp_now_register_recv_cb(OnDataRecv);
-}
-
 void createSemaphores() {
 #ifdef USE_MULTI_THREAD
   semaphoreData = xSemaphoreCreateMutex();
@@ -483,9 +327,9 @@ void createSemaphores() {
 
 void createTasks() {
 #ifdef USE_MULTI_THREAD
-  debug->println(DEBUG_LEVEL_INFO, "Creating Tasks...");
+  myDebug->println(DEBUG_LEVEL_INFO, "Creating Tasks...");
   #ifdef DISPLAY_AT_CORE1
-    debug->println(DEBUG_LEVEL_INFO, "Staring up Display Manager...");
+    myDebug->println(DEBUG_LEVEL_INFO, "Staring up Display Manager...");
 
     xTaskCreatePinnedToCore(
       tft_task,       // Task function.
@@ -501,10 +345,10 @@ void createTasks() {
 
   // other tasks here
 
-  debug->println(DEBUG_LEVEL_INFO, "Setup completed\nStarting tasks...");
+  myDebug->println(DEBUG_LEVEL_INFO, "Setup completed\nStarting tasks...");
 
   #ifdef DISPLAY_AT_CORE1
-    debug->println(DEBUG_LEVEL_INFO, "Starting Display...");
+    myDebug->println(DEBUG_LEVEL_INFO, "Starting Display...");
     vTaskResume(t_core1_tft);
     delay(200);
   #endif
@@ -512,11 +356,44 @@ void createTasks() {
 #endif
 }
 
+#ifndef MODE_RELEASE
+void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
+    myDebug->print(DEBUG_LEVEL_DEBUG2, "Packet to: ");
+    // Copies the sender mac address to a string
+    snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
+            mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
+    myDebug->print(DEBUG_LEVEL_DEBUG2, macStr);
+    myDebug->print(DEBUG_LEVEL_DEBUG2, " send status:\t");
+    myDebug->println(DEBUG_LEVEL_DEBUG2, status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
+}
+#endif
+
+// Callback when data is received
+void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len) {
+
+  #ifndef MODE_RELEASE
+    myDebug->print(DEBUG_LEVEL_DEBUG2, "Packet from: ");
+    // Copies the sender mac address to a string
+    snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
+            mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
+    myDebug->println(DEBUG_LEVEL_DEBUG2, macStr);
+    myDebug->print(DEBUG_LEVEL_DEBUG2, "Bytes received: ");
+    myDebug->println(DEBUG_LEVEL_DEBUG2, len);
+  #endif
+
+  memcpy(&espNowPacket, incomingData, sizeof(espNowPacket));
+  if (espNowPacket.type == 2) { // Buttons
+    #ifdef USE_MODULE_SWITCHES
+      mySwitches->espNow(espNowPacket.id, espNowPacket.value);
+    #endif
+  }
+}
+
 void setup() {
 
   initializeDebug(); 
 
-  debug->println(DEBUG_LEVEL_INFO, "Staring up...");
+  myDebug->println(DEBUG_LEVEL_INFO, "Staring up...");
 
   initializeDisplay();
   delay(200);
@@ -527,11 +404,19 @@ void setup() {
 
   createSemaphores();  
   
-  initializeEspNow();
+  myWiFi = new MyWiFi();
+  #ifndef MODE_RELEASE
+    myWiFi->initESPNow(0, false, OnDataSent, OnDataRecv);
+  #else
+    myWiFi->initESPNow(0, false, nullptr, OnDataRecv);
+  #endif
+  myWiFi->addEspNowPeer(bs8_address);
+
   startRTC();  
 
   initializeUI();
-  #ifdef USE_MODULE_CONTROLS
+  #ifdef USE_MODULE_SWITCHES
+    mySwitches = new MySwitches();
     setupButtons();
   #endif
 
@@ -539,12 +424,8 @@ void setup() {
 
   createTasks();
 
-  debug->println(DEBUG_LEVEL_INFO, "Setup completed");
-  debug->println(DEBUG_LEVEL_INFO, "Requesting Buttons status...");
-
-  switchesLastAlive = 0;
-  switchesLastSignal = 0;
-
+  myDebug->println(DEBUG_LEVEL_INFO, "Setup completed");
+  myDebug->println(DEBUG_LEVEL_INFO, "Requesting Buttons status...");
 }
 
 void loop() {
@@ -554,7 +435,7 @@ void loop() {
 
   now = millis();
 
-  #ifdef USE_MODULE_CONTROLS
+  #ifdef USE_MODULE_SWITCHES
     #ifdef USE_MODULE_SETTINGS
       #ifdef SHOW_TOP_BAR
       if (now > (switchesLastSignal + 1000)) {
@@ -571,7 +452,7 @@ void loop() {
   #endif
 
   #ifndef DISPLAY_AT_CORE1  
-    #ifdef USE_MODULE_CONTROLS
+    #ifdef USE_MODULE_SWITCHES
     for (int i=1; i<=BUTTONS_ON_SCREEN; i++) {
       if (buttons[i].needsUpdate) {
         buttons[i].needsUpdate = false;

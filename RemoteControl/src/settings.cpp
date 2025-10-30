@@ -4,7 +4,7 @@
 #include "defines.h"
 #include "vars.h"
 
-#include "debug.h"
+#include "MyDebug.h"
 
 #ifdef ENABLE_EEPROM
   #include "myEEPROM.h"    
@@ -12,26 +12,26 @@
 
 Settings::Settings() {
 
-  debug->println(DEBUG_LEVEL_DEBUG, "[Settings]");
+  myDebug->println(DEBUG_LEVEL_DEBUG, "[Settings]");
 
   #ifdef ENABLE_EEPROM
     myEEPROM = new MyEEPROM(512);
     myEEPROM->start();
-    debug->println(DEBUG_LEVEL_DEBUG, "[OK]");
+    myDebug->println(DEBUG_LEVEL_DEBUG, "[OK]");
   #endif
 }
 
 void Settings::load() {
-  debug->println(DEBUG_LEVEL_INFO, "Loading settings...");
+  myDebug->println(DEBUG_LEVEL_INFO, "Loading settings...");
 
   #ifdef ENABLE_EEPROM    
     if (myEEPROM->hasSignature()) {
-        debug->println(DEBUG_LEVEL_INFO, "Signature OK");
+        myDebug->println(DEBUG_LEVEL_INFO, "Signature OK");
 
         this->waitRelay = myEEPROM->readByte(EEPROM_WAIT_RELAY);
 
     } else {
-      debug->println(DEBUG_LEVEL_INFO, "No signature");
+      myDebug->println(DEBUG_LEVEL_INFO, "No signature");
       myEEPROM->createSignature();
       setDefaults();
       save();
@@ -39,32 +39,32 @@ void Settings::load() {
   #else
     setDefaults();
   #endif
-  debug->println(DEBUG_LEVEL_DEBUG, "Done");
+  myDebug->println(DEBUG_LEVEL_DEBUG, "Done");
 }
 
 void Settings::save() {
   
-  debug->println(DEBUG_LEVEL_DEBUG, "Saving settings...");
+  myDebug->println(DEBUG_LEVEL_DEBUG, "Saving settings...");
   #ifdef ENABLE_EEPROM
     if (!myEEPROM->hasSignature()) {
-      debug->println(DEBUG_LEVEL_DEBUG, "No signature");
+      myDebug->println(DEBUG_LEVEL_DEBUG, "No signature");
       myEEPROM->createSignature();
     }
-    debug->println(DEBUG_LEVEL_DEBUG, "Writing data to EEPROM");
+    myDebug->println(DEBUG_LEVEL_DEBUG, "Writing data to EEPROM");
 
     myEEPROM->writeByte(EEPROM_WAIT_RELAY, this->waitRelay);
 
   #endif
-  debug->println(DEBUG_LEVEL_DEBUG, "[OK] Saving settings");
+  myDebug->println(DEBUG_LEVEL_DEBUG, "[OK] Saving settings");
 }
 
 void Settings::setDefaults() {
     
-    debug->println(DEBUG_LEVEL_INFO, "Setting default values");
+    myDebug->println(DEBUG_LEVEL_INFO, "Setting default values");
 
     this->waitRelay = 0;
 
-    debug->println(DEBUG_LEVEL_DEBUG, "[OK] Setting default values");
+    myDebug->println(DEBUG_LEVEL_DEBUG, "[OK] Setting default values");
 }
 
 void Settings::setWaitRelay(bool isOn) {

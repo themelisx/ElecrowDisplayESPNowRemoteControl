@@ -4,12 +4,6 @@
 #include <Arduino.h>
 #include "../lvgl/lvgl.h"
 
-typedef struct s_espNow {
-  uint8_t type;
-  uint8_t id;
-  int16_t value;
-} s_espNow;
-
 typedef struct s_espNowButtons {
   bool enabled;
   bool needsUpdate;

@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 
-#include "debug.h"
+#include "myDebug.h"
 #include "structs.h"
 #include "settings.h"
 
@@ -21,7 +21,7 @@
     #endif
 #endif
 
-extern Debug *debug;
+extern MyDebug *myDebug;
 extern Settings *mySettings;
 
 #endif
