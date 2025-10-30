@@ -3,9 +3,11 @@
 
 #include <Arduino.h>
 
-#include "myDebug.h"
+#include "MyDebug.h"
 #include "structs.h"
 #include "settings.h"
+#include "mySwitches.h"
+#include "myWiFi.h"
 
 #ifdef USE_MULTI_THREAD
     extern SemaphoreHandle_t semaphoreData;
@@ -15,7 +17,6 @@
         extern TaskHandle_t t_core1_tft;
     #endif
 
-    extern s_espNowButtons buttons[10];
     #ifdef USE_MAIN_TAB_VIEW
         extern lv_obj_t * ui_MainTabView;
     #endif
@@ -23,5 +24,7 @@
 
 extern MyDebug *myDebug;
 extern Settings *mySettings;
+extern MySwitches *mySwitches;
+extern MyWiFi *myWiFi;
 
 #endif
