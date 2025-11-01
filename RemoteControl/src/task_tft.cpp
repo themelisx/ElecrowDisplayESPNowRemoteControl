@@ -8,8 +8,7 @@
   #include "vars.h"
 
   void tft_task(void *pvParameters) {
-    myDebug->print(DEBUG_LEVEL_INFO, "View manager TFT: Task running on core ");
-    myDebug->println(DEBUG_LEVEL_INFO, xPortGetCoreID());
+    myDebug->println(DEBUG_LEVEL_INFO, "View manager TFT: Task running on core %d", xPortGetCoreID()));
 
     for (;;) {
 

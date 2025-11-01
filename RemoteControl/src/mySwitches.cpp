@@ -89,10 +89,7 @@ void MySwitches::btnClick(uint8_t btnId) {
   }
 
   #ifndef MODE_RELEASE
-    myDebug->print(DEBUG_LEVEL_DEBUG, "Request change for id ");
-    myDebug->print(DEBUG_LEVEL_DEBUG, btnId);
-    myDebug->print(DEBUG_LEVEL_DEBUG, ", new state = ");
-    myDebug->println(DEBUG_LEVEL_DEBUG, state);
+    myDebug->println(DEBUG_LEVEL_DEBUG, "Request change for id %d, new state = %d", btnId, state);
   #endif
 
   #ifndef MODE_RELEASE

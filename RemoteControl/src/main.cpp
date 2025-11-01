@@ -100,10 +100,8 @@ void my_touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
       data->point.x = touch_last_x;
       data->point.y = touch_last_y;
       #ifndef MODE_RELEASE
-        myDebug->print(DEBUG_LEVEL_DEBUG2, "Data x :" );
-        myDebug->println(DEBUG_LEVEL_DEBUG2, touch_last_x );
-        myDebug->print(DEBUG_LEVEL_DEBUG2, "Data y :" );
-        myDebug->println(DEBUG_LEVEL_DEBUG2, touch_last_y );
+        myDebug->println(DEBUG_LEVEL_DEBUG2, "Data x: %d", touch_last_x);
+        myDebug->println(DEBUG_LEVEL_DEBUG2, "Data y: %d", touch_last_y);
       #endif
     }
     else if (touch_released())
@@ -358,13 +356,10 @@ void createTasks() {
 
 #ifndef MODE_RELEASE
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
-    myDebug->print(DEBUG_LEVEL_DEBUG2, "Packet to: ");
     // Copies the sender mac address to a string
     snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
             mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
-    myDebug->print(DEBUG_LEVEL_DEBUG2, macStr);
-    myDebug->print(DEBUG_LEVEL_DEBUG2, " send status:\t");
-    myDebug->println(DEBUG_LEVEL_DEBUG2, status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
+    myDebug->println(DEBUG_LEVEL_DEBUG2, "Packet to: %s, send status: %s", macStr, status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
 }
 #endif
 
@@ -372,13 +367,11 @@ void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
 void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len) {
 
   #ifndef MODE_RELEASE
-    myDebug->print(DEBUG_LEVEL_DEBUG2, "Packet from: ");
     // Copies the sender mac address to a string
     snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
             mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
-    myDebug->println(DEBUG_LEVEL_DEBUG2, macStr);
-    myDebug->print(DEBUG_LEVEL_DEBUG2, "Bytes received: ");
-    myDebug->println(DEBUG_LEVEL_DEBUG2, len);
+    myDebug->println(DEBUG_LEVEL_DEBUG2, "Packet from: %s", macStr);
+    myDebug->println(DEBUG_LEVEL_DEBUG2, "Bytes received: %d", len);
   #endif
 
   memcpy(&espNowPacket, incomingData, sizeof(espNowPacket));
