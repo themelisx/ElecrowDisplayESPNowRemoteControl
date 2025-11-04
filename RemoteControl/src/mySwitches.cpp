@@ -64,7 +64,7 @@ esp_err_t MySwitches::sendToRelay(int btnId, int state) {
   
   myDebug->println(DEBUG_LEVEL_INFO, "Sending esp_now to Relay");  
 
-  if (!mySettings->IsWaitRelay()) {
+  if (!mySettings->readBool(PREF_WAIT_RELAY)) {
     #ifdef USE_MULTI_THREAD
       xSemaphoreTake(semaphoreData, portMAX_DELAY);
     #endif

@@ -9,7 +9,7 @@
 #define STATE_ON LOW
 
 // EEPROM position (0 and 1 are reserved)
-#define EEPROM_WAIT_RELAY 2
+#define PREF_WAIT_RELAY "wait_relay"
 
 // Colors
 #define COLOR_WHITE 0xFFFFFF

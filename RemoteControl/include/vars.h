@@ -5,7 +5,7 @@
 
 #include "MyDebug.h"
 #include "structs.h"
-#include "settings.h"
+#include "mySettings.h"
 #include "mySwitches.h"
 #include "myWiFi.h"
 
@@ -23,7 +23,7 @@
 #endif
 
 extern MyDebug *myDebug;
-extern Settings *mySettings;
+extern MySettings *mySettings;
 extern MySwitches *mySwitches;
 extern MyWiFi *myWiFi;
 
