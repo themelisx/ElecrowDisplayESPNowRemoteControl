@@ -1,5 +1,5 @@
 # Elecrow Display - Remote Control
-Remote control relay from Elecrow panels 3.5, 5 and 7 inches using ESPNow.
+Remote control relay from Elecrow panels 5 and 7 inches using ESPNow.
 
 Supports Greek fonts
 

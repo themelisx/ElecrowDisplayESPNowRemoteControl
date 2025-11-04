@@ -233,7 +233,7 @@ void initializeLVGL() {
 }
 
 void onWaitRelayPressed(bool pressed) {
-  mySettings->setWaitRelay(pressed);
+  mySettings->writeBool(PREF_WAIT_RELAY, pressed);
 }
 
 #ifdef USE_MODULE_SWITCHES
