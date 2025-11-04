@@ -19,7 +19,7 @@
 #include "../include/defines.h"
 #include "myDebug.h"
 #include "../include/structs.h"
-#include "../include/settings.h"
+#include "mySettings.h"
 #include "myWifi.h"
 #include "../include/mySwitches.h"
 #ifdef USE_MULTI_THREAD
@@ -41,9 +41,10 @@ ESP32Time rtc(0);
 char time_str[9];
 char macStr[18];
 
-Settings *mySettings;
+MySettings *mySettings;
 MyWiFi *myWiFi;
 MySwitches *mySwitches;
+MyDebug *myDebug;
 
 s_espNow espNowPacket;
 
@@ -65,8 +66,6 @@ Adafruit_SSD1306 display = Adafruit_SSD1306(128, 64, &I2Cone, OLED_RESET);
 SPIClass& spi = SPI;
 uint16_t touchCalibration_x0 = 300, touchCalibration_x1 = 3600, touchCalibration_y0 = 300, touchCalibration_y1 = 3600;
 uint8_t  touchCalibration_rotate = 1, touchCalibration_invert_x = 2, touchCalibration_invert_y = 0;
-
-MyDebug *myDebug;
 
 
 // Elecrow Display callbacks
@@ -186,17 +185,12 @@ void initializeDisplay() {
 }
 
 void loadSettings() {
-  mySettings = new Settings();
-  #ifdef CLEAR_SETTINGS
-    mySettings->setDefaults();
-    mySettings->save();
-  #else
-    mySettings->load();    
-  #endif
+  mySettings = new MySettings();
+  mySettings->start();
   
   #ifdef USE_MODULE_SETTINGS
     #ifdef USE_MODULE_SWITCHES
-      if (mySettings->IsWaitRelay()) {
+      if (mySettings->readBool(PREF_WAIT_RELAY)) {
         lv_obj_add_state(ui_WaitRelay, LV_STATE_CHECKED);
       } else {
         lv_obj_add_state(ui_WaitRelay, LV_STATE_DEFAULT);
